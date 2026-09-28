@@ -17,6 +17,14 @@ Metrics: accuracy, balanced accuracy, precision, recall, F1 (macro/weighted), Co
 MCC, per-class sensitivity/specificity, ROC/AUC, precision–recall, confusion matrices, and
 training/validation accuracy and loss curves.
 
+On CHB-MIT, a test patient with one class (chb07 has no seizure segments) leaves sensitivity,
+AUC, average precision, balanced accuracy, macro-averaged scores, kappa and MCC undefined. The
+LOPO tables (`lopo_fold_metrics.csv`, `lopo_per_patient_metrics.csv`) report them as NaN and
+are the per-fold source of record; the aggregates in `lopo_summary.json` count only the folds
+that define each metric. Each fold's own `metrics.json`
+comes from the shared metric code, which nulls only sensitivity, specificity, AUC and average
+precision, so it keeps scikit-learn's placeholder values for the rest on such a fold.
+
 ## Design principles
 
 - **Adaptation, not redesign.** ATCNet is changed only where the data requires it (number of

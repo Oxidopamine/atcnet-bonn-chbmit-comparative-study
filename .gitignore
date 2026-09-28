@@ -6,7 +6,7 @@ data/
 *.zip
 *.csv.gz
 bonn/
-chbmit*/
+chbmit_*/
 CHBMIT_*/
 
 # Training outputs
@@ -16,6 +16,12 @@ runs/
 *.pth
 *.ckpt
 *.docx
+
+# Derived from a collaborator's unpublished notebooks — kept local until they agree to publish
+notebooks/
+atcnet/
+protocol/*.json
+protocol/*.csv
 
 # Secrets
 .env

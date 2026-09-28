@@ -1,0 +1,633 @@
+{
+ "_note": "Trimmed from RunPod's published OpenAPI documents (GET https://api.runpod.io/v2/openapi.json and https://rest.runpod.io/v1/openapi.json, retrieved 2026-09-28): only the request schemas rp.py sends and the paths it calls. Used by tests/test_runpod.py; refresh when the API changes.",
+ "v1": {
+  "paths": {
+   "/pods": [
+    "get",
+    "post"
+   ],
+   "/pods/{podId}": [
+    "delete",
+    "get",
+    "patch"
+   ],
+   "/pods/{podId}/stop": [
+    "post"
+   ]
+  },
+  "schemas": {
+   "PodCreateInput": {
+    "properties": {
+     "allowedCudaVersions": {
+      "items": {
+       "enum": [
+        "13.0",
+        "12.9",
+        "12.8",
+        "12.7",
+        "12.6",
+        "12.5",
+        "12.4",
+        "12.3",
+        "12.2",
+        "12.1",
+        "12.0",
+        "11.8"
+       ],
+       "type": "string"
+      },
+      "type": "array"
+     },
+     "cloudType": {
+      "default": "SECURE",
+      "enum": [
+       "SECURE",
+       "COMMUNITY"
+      ],
+      "type": "string"
+     },
+     "computeType": {
+      "default": "GPU",
+      "enum": [
+       "GPU",
+       "CPU"
+      ],
+      "type": "string"
+     },
+     "containerDiskInGb": {
+      "default": 50,
+      "nullable": true,
+      "type": "integer"
+     },
+     "containerRegistryAuthId": {
+      "type": "string"
+     },
+     "countryCodes": {
+      "items": {
+       "type": "string"
+      },
+      "type": "array"
+     },
+     "cpuFlavorIds": {
+      "items": {
+       "enum": [
+        "cpu3c",
+        "cpu3g",
+        "cpu3m",
+        "cpu5c",
+        "cpu5g",
+        "cpu5m"
+       ],
+       "type": "string"
+      },
+      "type": "array"
+     },
+     "cpuFlavorPriority": {
+      "default": "availability",
+      "enum": [
+       "availability",
+       "custom"
+      ],
+      "type": "string"
+     },
+     "dataCenterIds": {
+      "default": [
+       "EU-RO-1",
+       "CA-MTL-1",
+       "EU-SE-1",
+       "US-IL-1",
+       "EUR-IS-1",
+       "EU-CZ-1",
+       "US-TX-3",
+       "EUR-IS-2",
+       "US-KS-2",
+       "US-GA-2",
+       "US-WA-1",
+       "US-TX-1",
+       "CA-MTL-3",
+       "EU-NL-1",
+       "US-TX-4",
+       "US-CA-2",
+       "US-NC-1",
+       "OC-AU-1",
+       "US-DE-1",
+       "EUR-IS-3",
+       "CA-MTL-2",
+       "AP-JP-1",
+       "EUR-NO-1",
+       "EU-FR-1",
+       "US-KS-3",
+       "US-GA-1",
+       "AP-IN-1",
+       "US-MD-1"
+      ],
+      "items": {
+       "enum": [
+        "EU-RO-1",
+        "CA-MTL-1",
+        "EU-SE-1",
+        "US-IL-1",
+        "EUR-IS-1",
+        "EU-CZ-1",
+        "US-TX-3",
+        "EUR-IS-2",
+        "US-KS-2",
+        "US-GA-2",
+        "US-WA-1",
+        "US-TX-1",
+        "CA-MTL-3",
+        "EU-NL-1",
+        "US-TX-4",
+        "US-CA-2",
+        "US-NC-1",
+        "OC-AU-1",
+        "US-DE-1",
+        "EUR-IS-3",
+        "CA-MTL-2",
+        "AP-JP-1",
+        "EUR-NO-1",
+        "EU-FR-1",
+        "US-KS-3",
+        "US-GA-1",
+        "AP-IN-1",
+        "US-MD-1"
+       ],
+       "type": "string"
+      },
+      "type": "array"
+     },
+     "dataCenterPriority": {
+      "default": "availability",
+      "enum": [
+       "availability",
+       "custom"
+      ],
+      "type": "string"
+     },
+     "dockerEntrypoint": {
+      "default": [],
+      "items": {
+       "type": "string"
+      },
+      "type": "array"
+     },
+     "dockerStartCmd": {
+      "default": [],
+      "items": {
+       "type": "string"
+      },
+      "type": "array"
+     },
+     "env": {
+      "default": {},
+      "items": {
+       "type": "string"
+      },
+      "type": "object"
+     },
+     "globalNetworking": {
+      "default": false,
+      "type": "boolean"
+     },
+     "gpuCount": {
+      "default": 1,
+      "minimum": 1,
+      "type": "integer"
+     },
+     "gpuTypeIds": {
+      "items": {
+       "enum": [
+        "AMD Instinct MI300X OAM",
+        "NVIDIA A100 80GB PCIe",
+        "NVIDIA A100-SXM4-40GB",
+        "NVIDIA A100-SXM4-80GB",
+        "NVIDIA A40",
+        "NVIDIA B200",
+        "NVIDIA B300 SXM6 AC",
+        "NVIDIA B300 SXM6 AC MIG 1g.34gb",
+        "NVIDIA GeForce RTX 3070",
+        "NVIDIA GeForce RTX 3080",
+        "NVIDIA GeForce RTX 3080 Ti",
+        "NVIDIA GeForce RTX 3090",
+        "NVIDIA GeForce RTX 3090 Ti",
+        "NVIDIA GeForce RTX 4070 Ti",
+        "NVIDIA GeForce RTX 4080",
+        "NVIDIA GeForce RTX 4080 SUPER",
+        "NVIDIA GeForce RTX 4090",
+        "NVIDIA GeForce RTX 5080",
+        "NVIDIA GeForce RTX 5090",
+        "NVIDIA H100 80GB HBM3",
+        "NVIDIA H100 NVL",
+        "NVIDIA H100 PCIe",
+        "NVIDIA H200",
+        "NVIDIA H200 NVL",
+        "NVIDIA L4",
+        "NVIDIA L40",
+        "NVIDIA L40S",
+        "NVIDIA RTX 2000 Ada Generation",
+        "NVIDIA RTX 4000 Ada Generation",
+        "NVIDIA RTX 4000 SFF Ada Generation",
+        "NVIDIA RTX 5000 Ada Generation",
+        "NVIDIA RTX 6000 Ada Generation",
+        "NVIDIA RTX A2000",
+        "NVIDIA RTX A4000",
+        "NVIDIA RTX A4500",
+        "NVIDIA RTX A5000",
+        "NVIDIA RTX A6000",
+        "NVIDIA RTX PRO 4000 Blackwell",
+        "NVIDIA RTX PRO 4500 Blackwell",
+        "NVIDIA RTX PRO 5000 Blackwell",
+        "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "NVIDIA RTX PRO 6000 Blackwell Server Edition",
+        "NVIDIA RTX PRO 6000 Blackwell Workstation Edition",
+        "Tesla V100-PCIE-16GB",
+        "Tesla V100-SXM2-16GB"
+       ],
+       "type": "string"
+      },
+      "type": "array"
+     },
+     "gpuTypePriority": {
+      "default": "availability",
+      "enum": [
+       "availability",
+       "custom"
+      ],
+      "type": "string"
+     },
+     "imageName": {
+      "type": "string"
+     },
+     "interruptible": {
+      "default": false,
+      "type": "boolean"
+     },
+     "locked": {
+      "default": false,
+      "type": "boolean"
+     },
+     "minDiskBandwidthMBps": {
+      "type": "number"
+     },
+     "minDownloadMbps": {
+      "type": "number"
+     },
+     "minRAMPerGPU": {
+      "default": 8,
+      "type": "integer"
+     },
+     "minUploadMbps": {
+      "type": "number"
+     },
+     "minVCPUPerGPU": {
+      "default": 2,
+      "type": "integer"
+     },
+     "name": {
+      "default": "my pod",
+      "maxLength": 191,
+      "type": "string"
+     },
+     "networkVolumeId": {
+      "type": "string"
+     },
+     "ports": {
+      "default": "8888/http,22/tcp",
+      "items": {
+       "type": "string"
+      },
+      "type": "array"
+     },
+     "supportPublicIp": {
+      "type": "boolean"
+     },
+     "templateId": {
+      "type": "string"
+     },
+     "vcpuCount": {
+      "default": 2,
+      "type": "integer"
+     },
+     "volumeInGb": {
+      "default": 20,
+      "nullable": true,
+      "type": "integer"
+     },
+     "volumeMountPath": {
+      "default": "/workspace",
+      "type": "string"
+     }
+    },
+    "type": "object"
+   }
+  },
+  "server": "https://rest.runpod.io/v1"
+ },
+ "v2": {
+  "paths": {
+   "/v2/account/ssh-keys": [
+    "get"
+   ],
+   "/v2/catalog/gpus": [
+    "get"
+   ],
+   "/v2/network-volumes": [
+    "get",
+    "post"
+   ],
+   "/v2/pods": [
+    "get",
+    "post"
+   ],
+   "/v2/pods/{id}": [
+    "delete",
+    "get",
+    "patch"
+   ],
+   "/v2/pods/{id}/action": [
+    "post"
+   ]
+  },
+  "schemas": {
+   "BaseContainerConfig": {
+    "properties": {
+     "args": {
+      "type": "string"
+     },
+     "cmd": {
+      "items": {
+       "type": "string"
+      },
+      "type": "array"
+     },
+     "disk": {
+      "minimum": 1,
+      "type": "integer"
+     },
+     "entrypoint": {
+      "items": {
+       "type": "string"
+      },
+      "type": "array"
+     },
+     "env": {
+      "additionalProperties": {
+       "type": "string"
+      },
+      "type": "object"
+     },
+     "image": {
+      "type": "string"
+     },
+     "ports": {
+      "items": {
+       "type": "string"
+      },
+      "type": "array"
+     }
+    },
+    "type": "object"
+   },
+   "BaseCpuConfig": {
+    "properties": {
+     "id": {
+      "minLength": 1,
+      "type": "string"
+     },
+     "vcpuCount": {
+      "minimum": 2,
+      "type": "integer"
+     }
+    },
+    "required": [
+     "id",
+     "vcpuCount"
+    ],
+    "type": "object"
+   },
+   "BaseGpuConfig": {
+    "properties": {
+     "count": {
+      "default": 1,
+      "minimum": 1,
+      "type": "integer"
+     },
+     "id": {
+      "type": "string"
+     }
+    },
+    "required": [
+     "id"
+    ],
+    "type": "object"
+   },
+   "Cloud": {
+    "enum": [
+     "SECURE",
+     "COMMUNITY"
+    ],
+    "type": "string"
+   },
+   "ContainerConfig": {
+    "allOf": [
+     {
+      "$ref": "#/components/schemas/BaseContainerConfig"
+     },
+     {
+      "properties": {
+       "registry": {
+        "type": [
+         "string",
+         "null"
+        ]
+       }
+      },
+      "type": "object"
+     }
+    ]
+   },
+   "CreateCpuConfig": {
+    "allOf": [
+     {
+      "$ref": "#/components/schemas/BaseCpuConfig"
+     }
+    ],
+    "unevaluatedProperties": false
+   },
+   "CreateGpuConfig": {
+    "allOf": [
+     {
+      "$ref": "#/components/schemas/BaseGpuConfig"
+     },
+     {
+      "properties": {
+       "allowedCudaVersions": {
+        "items": {
+         "pattern": "^\\d+\\.\\d+$",
+         "type": "string"
+        },
+        "type": "array"
+       },
+       "minCudaVersion": {
+        "pattern": "^\\d+\\.\\d+$",
+        "type": "string"
+       },
+       "minRamPerGpu": {
+        "minimum": 1,
+        "type": "integer"
+       },
+       "minVcpuCountPerGpu": {
+        "minimum": 1,
+        "type": "integer"
+       }
+      },
+      "type": "object"
+     }
+    ],
+    "unevaluatedProperties": false
+   },
+   "CreatePodRequest": {
+    "allOf": [
+     {
+      "$ref": "#/components/schemas/ContainerConfig"
+     },
+     {
+      "properties": {
+       "cloud": {
+        "allOf": [
+         {
+          "$ref": "#/components/schemas/Cloud"
+         }
+        ],
+        "default": "SECURE"
+       },
+       "cpu": {
+        "$ref": "#/components/schemas/CreateCpuConfig"
+       },
+       "dataCenterIds": {
+        "items": {
+         "type": "string"
+        },
+        "type": "array"
+       },
+       "globalNetworking": {
+        "default": false,
+        "type": "boolean"
+       },
+       "gpu": {
+        "$ref": "#/components/schemas/CreateGpuConfig"
+       },
+       "mounts": {
+        "$ref": "#/components/schemas/Mounts"
+       },
+       "name": {
+        "minLength": 1,
+        "type": "string"
+       },
+       "startJupyter": {
+        "default": false,
+        "type": "boolean"
+       },
+       "startSsh": {
+        "default": false,
+        "type": "boolean"
+       },
+       "templateId": {
+        "minLength": 1,
+        "type": "string"
+       }
+      },
+      "required": [
+       "name"
+      ],
+      "type": "object"
+     }
+    ],
+    "if": {
+     "not": {
+      "required": [
+       "templateId"
+      ]
+     }
+    },
+    "then": {
+     "required": [
+      "image"
+     ]
+    },
+    "unevaluatedProperties": false
+   },
+   "Mounts": {
+    "additionalProperties": false,
+    "properties": {
+     "network": {
+      "items": {
+       "$ref": "#/components/schemas/NetworkMount"
+      },
+      "maxItems": 1,
+      "type": "array"
+     },
+     "persistent": {
+      "$ref": "#/components/schemas/PersistentMount"
+     }
+    },
+    "type": "object"
+   },
+   "NetworkMount": {
+    "additionalProperties": false,
+    "properties": {
+     "path": {
+      "type": "string"
+     },
+     "volumeId": {
+      "type": "string"
+     }
+    },
+    "required": [
+     "volumeId",
+     "path"
+    ],
+    "type": "object"
+   },
+   "PersistentMount": {
+    "additionalProperties": false,
+    "properties": {
+     "path": {
+      "type": "string"
+     },
+     "size": {
+      "minimum": 10,
+      "type": "integer"
+     }
+    },
+    "required": [
+     "size",
+     "path"
+    ],
+    "type": "object"
+   },
+   "PodAction": {
+    "enum": [
+     "start",
+     "stop",
+     "restart",
+     "terminate"
+    ],
+    "type": "string"
+   },
+   "PodActionRequest": {
+    "additionalProperties": false,
+    "properties": {
+     "action": {
+      "$ref": "#/components/schemas/PodAction"
+     }
+    },
+    "required": [
+     "action"
+    ],
+    "type": "object"
+   }
+  },
+  "server": "https://api.runpod.io"
+ }
+}
