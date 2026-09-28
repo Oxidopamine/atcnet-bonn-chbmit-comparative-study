@@ -1,0 +1,15 @@
+This project adapts the ATCNet architecture for EEG seizure classification.
+
+ATCNet architecture reference:
+  Altaheri, H., Muhammad, G., & Alsulaiman, M. (2023). Physics-informed attention temporal
+  convolutional network for EEG-based motor imagery classification. IEEE Transactions on
+  Industrial Informatics, 19(2), 2249-2258.
+  Upstream code: https://github.com/Altaheri/EEG-ATCNet (commit 65162fb359ea46a2f62c885a9987247ab491ee7a)
+  Copyright (C) 2022 King Saud University, Saudi Arabia. Licensed under the Apache License 2.0.
+
+Changes in this project: PyTorch port generalized to N input channels, seizure-dataset loaders,
+leave-one-patient-out evaluation, and a RunPod training harness.
+
+Datasets are NOT distributed with this repository:
+  - Bonn University EEG database: Andrzejak et al. (2001), Phys. Rev. E 64, 061907.
+  - CHB-MIT Scalp EEG Database: Shoeb (2009); Goldberger et al. (2000), PhysioNet.

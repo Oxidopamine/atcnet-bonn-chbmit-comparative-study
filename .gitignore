@@ -1,0 +1,33 @@
+# Data — never committed (licensing and size)
+data/
+*.npz
+*.npy
+*.edf
+*.zip
+*.csv.gz
+bonn/
+chbmit*/
+CHBMIT_*/
+
+# Training outputs
+results/
+runs/
+*.pt
+*.pth
+*.ckpt
+*.docx
+
+# Secrets
+.env
+*api_key*
+*.pem
+id_*
+
+# Python / tooling
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+pydeps/
+.ipynb_checkpoints/
+.pytest_cache/
