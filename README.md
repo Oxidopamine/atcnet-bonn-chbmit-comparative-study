@@ -5,7 +5,8 @@ seizure classification, trained under a shared protocol so it can be compared fa
 EEGNet and TCFormer.
 
 > **Status:** first complete ATCNet run on both datasets — see the plain-language
-> [results report](reports/REPORT.md). The side-by-side comparison with EEGNet and TCFormer is still to come.
+> [results report](reports/REPORT.md) (also as a single-file [HTML page](reports/report.html) — download and open it in a browser).
+> The side-by-side comparison with EEGNet and TCFormer is still to come.
 
 ## Scope
 

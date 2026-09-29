@@ -1,0 +1,463 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ATCNet Seizure Results</title>
+<meta name="description" content="First results of the ATCNet model on the Bonn and CHB-MIT epilepsy EEG datasets, in plain language.">
+<style>
+:root {
+  color-scheme: light;
+  --page: #f9f9f7;
+  --surface: #fcfcfb;
+  --ink: #0b0b0b;
+  --ink-2: #52514e;
+  --muted: #898781;
+  --grid: #e1e0d9;
+  --axis: #c3c2b7;
+  --border: rgba(11, 11, 11, 0.10);
+  --wash: rgba(42, 120, 214, 0.07);
+  --s1: #2a78d6;
+  --s2: #eb6834;
+  --accent-ink: #1c5cab;
+}
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) {
+    color-scheme: dark;
+    --page: #0d0d0d; --surface: #1a1a19; --ink: #ffffff; --ink-2: #c3c2b7; --muted: #898781;
+    --grid: #2c2c2a; --axis: #383835; --border: rgba(255, 255, 255, 0.10); --wash: rgba(57, 135, 229, 0.12);
+    --s1: #3987e5; --s2: #d95926; --accent-ink: #86b6ef;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --page: #0d0d0d; --surface: #1a1a19; --ink: #ffffff; --ink-2: #c3c2b7; --muted: #898781;
+  --grid: #2c2c2a; --axis: #383835; --border: rgba(255, 255, 255, 0.10); --wash: rgba(57, 135, 229, 0.12);
+  --s1: #3987e5; --s2: #d95926; --accent-ink: #86b6ef;
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; background: var(--page); color: var(--ink);
+  font: 16px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+main { max-width: 880px; margin: 0 auto; padding: 40px 16px 64px; }
+h1 { font-size: clamp(1.7rem, 4vw, 2.3rem); line-height: 1.2; margin: 6px 0 12px; letter-spacing: -0.01em; }
+h2 { font-size: 1.35rem; margin: 0 0 14px; line-height: 1.3; }
+h3 { font-size: 1.05rem; margin: 0 0 6px; }
+p { margin: 0 0 12px; }
+.kicker { color: var(--accent-ink); font-weight: 600; font-size: 0.85rem; letter-spacing: 0.04em; text-transform: uppercase; }
+.lede { font-size: 1.12rem; color: var(--ink-2); max-width: 68ch; }
+.pill { display: inline-block; margin-top: 8px; padding: 3px 10px; border: 1px solid var(--border); border-radius: 999px;
+        font-size: 0.82rem; color: var(--ink-2); background: var(--surface); }
+section { margin-top: 44px; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 18px 20px; }
+.muted { color: var(--muted); }
+.small { font-size: 0.88rem; }
+.ink2 { color: var(--ink-2); }
+
+/* stat tiles */
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-top: 24px; }
+.tile { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; }
+.tl { font-size: 0.8rem; color: var(--ink-2); line-height: 1.35; }
+.tv { font-size: 1.9rem; font-weight: 650; line-height: 1.2; margin: 6px 0 2px; }
+.tn { font-size: 0.8rem; color: var(--muted); line-height: 1.35; }
+
+/* two-up cards */
+.two { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
+.steps { counter-reset: s; list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; }
+.steps li { counter-increment: s; position: relative; padding: 16px 18px 16px 58px; }
+.steps li::before { content: counter(s); position: absolute; left: 18px; top: 16px; width: 26px; height: 26px; border-radius: 50%;
+  background: var(--wash); color: var(--accent-ink); font-weight: 700; font-size: 0.9rem; display: grid; place-items: center; }
+.facts { list-style: none; padding: 0; margin: 10px 0 0; }
+.facts li { padding: 5px 0; border-top: 1px solid var(--grid); font-size: 0.95rem; color: var(--ink-2); }
+.facts li b { color: var(--ink); font-weight: 600; }
+
+/* glossary */
+.gloss { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; }
+.gloss .card { padding: 14px 16px; }
+.gloss dt { font-weight: 650; }
+.gloss dd { margin: 4px 0 0; color: var(--ink-2); font-size: 0.95rem; }
+
+/* tables */
+.tbl { width: 100%; border-collapse: collapse; font-size: 0.94rem; }
+.tbl th { text-align: left; font-weight: 600; color: var(--ink-2); font-size: 0.82rem; padding: 8px 10px; border-bottom: 1px solid var(--axis); }
+.tbl td { padding: 9px 10px; border-bottom: 1px solid var(--grid); vertical-align: top; }
+.tbl td:not(:first-child), .tbl th:not(:first-child) { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.tbl tr:last-child td { border-bottom: 0; }
+.sd { color: var(--muted); font-size: 0.86em; }
+.scroll { overflow-x: auto; }
+details { margin-top: 14px; }
+summary { cursor: pointer; color: var(--accent-ink); font-weight: 600; font-size: 0.92rem; }
+details .tbl { margin-top: 10px; }
+
+/* charts (plain HTML) */
+.chart { margin-top: 16px; }
+.chart h3 { margin-bottom: 2px; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 0.86rem; color: var(--ink-2); margin: 8px 0 12px; }
+.legend span { display: inline-flex; align-items: center; gap: 7px; }
+.k-bar { width: 18px; height: 10px; border-radius: 0 3px 3px 0; background: var(--s1); }
+.k-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--s2); }
+.k-wh { width: 18px; height: 2px; background: var(--ink-2); position: relative; }
+.k-wh::before, .k-wh::after { content: ""; position: absolute; top: -3px; width: 2px; height: 8px; background: var(--ink-2); }
+.k-wh::before { left: 0; } .k-wh::after { right: 0; }
+.grp { font-size: 0.78rem; font-weight: 650; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin: 14px 0 4px; }
+.grp span { text-transform: none; letter-spacing: 0; font-weight: 400; }
+.row { position: relative; display: grid; grid-template-columns: 190px 1fr 58px; align-items: center; gap: 10px;
+       padding: 3px 6px; border-radius: 6px; outline: none; }
+.row:hover, .row:focus-visible { background: var(--wash); }
+.lab { font-size: 0.86rem; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.val { font-size: 0.86rem; text-align: right; font-variant-numeric: tabular-nums; color: var(--ink-2); }
+.track { position: relative; height: 16px;
+  background: linear-gradient(to right, var(--axis) 1px, transparent 1px) 0 0 / 100% 100% no-repeat,
+    linear-gradient(to right, transparent calc(25% - 0.5px), var(--grid) calc(25% - 0.5px), var(--grid) calc(25% + 0.5px), transparent calc(25% + 0.5px),
+      transparent calc(50% - 0.5px), var(--grid) calc(50% - 0.5px), var(--grid) calc(50% + 0.5px), transparent calc(50% + 0.5px),
+      transparent calc(75% - 0.5px), var(--grid) calc(75% - 0.5px), var(--grid) calc(75% + 0.5px), transparent calc(75% + 0.5px),
+      transparent calc(100% - 1px), var(--grid) calc(100% - 1px)); }
+.bar { position: absolute; left: 0; top: 2px; height: 12px; border-radius: 0 4px 4px 0; }
+.s1.bar { background: var(--s1); }
+.wh { position: absolute; top: 7px; height: 2px; background: var(--ink-2); }
+.wh::before, .wh::after { content: ""; position: absolute; top: -3px; width: 2px; height: 8px; background: var(--ink-2); }
+.wh::before { left: 0; } .wh::after { right: 0; }
+.dot { position: absolute; top: 3px; width: 10px; height: 10px; margin-left: -5px; border-radius: 50%;
+       background: var(--s2); box-shadow: 0 0 0 2px var(--surface); }
+.na { position: absolute; left: 6px; top: 0; font-size: 0.78rem; color: var(--muted); line-height: 16px; font-style: italic; }
+.row[data-tip]:hover::after, .row[data-tip]:focus-visible::after {
+  content: attr(data-tip); position: absolute; z-index: 5; left: 196px; right: 0; bottom: calc(100% + 4px);
+  background: var(--ink); color: var(--page); font-size: 0.8rem; line-height: 1.4; padding: 7px 10px; border-radius: 8px;
+  pointer-events: none; }
+.axis { display: grid; grid-template-columns: 190px 1fr 58px; gap: 10px; padding: 0 6px; margin-top: 4px; }
+.ticks { position: relative; height: 18px; font-size: 0.75rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.ticks span { position: absolute; transform: translateX(-50%); }
+.ticks span:first-child { transform: none; } .ticks span:last-child { transform: translateX(-100%); }
+
+/* callouts */
+.points { display: grid; gap: 12px; }
+.point { display: grid; grid-template-columns: 34px 1fr; gap: 12px; }
+.num { width: 30px; height: 30px; border-radius: 50%; background: var(--wash); color: var(--accent-ink); font-weight: 700; display: grid; place-items: center; }
+.point p { color: var(--ink-2); margin: 0; }
+.point h3 { margin-bottom: 4px; }
+ul.plain { margin: 0; padding-left: 20px; } ul.plain li { margin: 6px 0; color: var(--ink-2); }
+footer { margin-top: 48px; padding-top: 16px; border-top: 1px solid var(--grid); font-size: 0.85rem; color: var(--muted); }
+
+@media (max-width: 600px) {
+  main { padding-top: 28px; }
+  .row { grid-template-columns: 1fr 52px; row-gap: 2px; }
+  .row .lab { grid-column: 1 / -1; }
+  .axis { grid-template-columns: 1fr 52px; }
+  .axis > div:first-child { display: none; }
+  .row[data-tip]:hover::after, .row[data-tip]:focus-visible::after { left: 6px; }
+  .card { padding: 16px; }
+  .steps li { padding-left: 54px; }
+  .tbl { font-size: 0.86rem; }
+  .tbl th, .tbl td { padding: 8px 5px; }
+  .tbl .sd { display: block; }
+}
+@media print { .row[data-tip]::after { display: none !important; } details { display: block; } }
+</style>
+</head>
+<body>
+<main>
+
+<header>
+  <div class="kicker">Research report · September 2026</div>
+  <h1>ATCNet on two epilepsy EEG datasets: first results</h1>
+  <p class="lede">We trained ATCNet, a published EEG model, to recognise seizures in brain-wave recordings
+  from two public epilepsy datasets. We changed the model only as much as the data required and used the
+  same shared training settings that the other models in the study will use, so the results can be
+  compared fairly later.</p>
+  <span class="pill">Status: first complete run · comparison with EEGNet and TCFormer still to come</span>
+</header>
+
+<div class="tiles" aria-label="Results at a glance"><div class="tile"><div class="tl">Bonn · seizure vs non-seizure</div><div class="tv">93–97%</div><div class="tn">right, when non-seizure groups are pooled</div></div><div class="tile"><div class="tl">Bonn · all five groups</div><div class="tv">70%</div><div class="tn">right, separating all five at once</div></div><div class="tile"><div class="tl">CHB-MIT · overall</div><div class="tv">75%</div><div class="tn">right, on patients never seen before</div></div><div class="tile"><div class="tl">CHB-MIT · seizures caught</div><div class="tv">54%</div><div class="tn">of seizure segments flagged</div></div><div class="tile"><div class="tl">CHB-MIT · false alarms avoided</div><div class="tv">95%</div><div class="tn">of non-seizure segments left alone</div></div></div>
+
+<section>
+  <h2>What we did</h2>
+  <p class="ink2">ATCNet was first designed for brain–computer interfaces, systems that turn brain signals into
+  commands. We used the same version that the other models in this study are built around. Only two things changed:</p>
+  <ol class="steps">
+    <li class="card"><h3>More input channels</h3><span class="ink2">CHB-MIT recordings have 8 EEG channels; Bonn recordings
+      have 1. The model now reads any number of channels. With a single channel it behaves exactly like the
+      shared version. We checked this number for number.</span></li>
+    <li class="card"><h3>Same units for both datasets</h3><span class="ink2">CHB-MIT signals were stored in volts, Bonn signals in
+      microvolts. We converted CHB-MIT to microvolts, because at volt scale the numbers are too small for the
+      model's built-in scaling steps to work.</span></li>
+  </ol>
+  <p class="ink2" style="margin-top:14px">Everything else is the shared setup used for every model: 100 training
+  rounds, the same learning settings, the same way of splitting the data and the same scoring.</p>
+</section>
+
+<section>
+  <h2>The data and how we tested</h2>
+  <div class="two">
+    <div class="card">
+      <h3>Bonn <span class="muted small">· University of Bonn</span></h3>
+      <ul class="facts">
+        <li><b>500</b> single-channel recordings, <b>23.6 s</b> each</li>
+        <li>Five groups of 100: <b>Z</b> healthy, eyes open · <b>O</b> healthy, eyes closed ·
+          <b>N</b> and <b>F</b> people with epilepsy between seizures, two brain areas · <b>S</b> during a seizure</li>
+        <li><b>32 questions</b>, from all five groups at once down to simple pairs</li>
+        <li>Tested by splitting into <b>10 parts</b>: each part is tested once while the model learns from the rest,
+          with a small <b>check set</b> held back to pick which training round to keep. A separate <b>70/30</b> split
+          of the same recordings gives a second check.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>CHB-MIT <span class="muted small">· Boston Children's Hospital, public PhysioNet archive</span></h3>
+      <ul class="facts">
+        <li><b>2,053</b> ten-second segments, <b>8</b> channels, about half during seizures</li>
+        <li><b>23</b> young patients, mostly children, with IDs chb01 to chb24</li>
+        <li>Always tested on a <b>patient it had never seen</b>: it learned from 21 patients, used one more as
+          the check set, and was tested on the remaining one. Repeated for every patient.</li>
+        <li>Recordings from the same person at different times (chb01 &amp; chb21, chb17a &amp; chb17b) were always kept together.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>How to read the numbers</h2>
+  <dl class="gloss">
+    <div class="card"><dt>Accuracy</dt><dd>Share of recordings or segments labelled correctly.</dd></div>
+    <div class="card"><dt>Seizures caught</dt><dd>Share of seizure segments the model flagged (also called sensitivity).</dd></div>
+    <div class="card"><dt>Correct “no seizure”</dt><dd>Share of non-seizure segments left alone, i.e. no false alarm (also called specificity).</dd></div>
+    <div class="card"><dt>Cut-off</dt><dd>The model gives every segment a seizure score from 0 to 1. A score of 0.5 or more counts as “seizure”.</dd></div>
+    <div class="card"><dt>AUC</dt><dd>How well the scores rank seizure above non-seizure, whatever the cut-off. 1.0 is perfect; 0.5 is a coin toss.</dd></div>
+    <div class="card"><dt>± spread</dt><dd>How much the result varied between test runs (one standard deviation).</dd></div>
+  </dl>
+</section>
+
+<section>
+  <h2>Results: Bonn</h2>
+  <div class="card scroll">
+    <table class="tbl">
+      <thead><tr><th>Question asked</th><th>10-part test</th><th>70/30 test</th><th>AUC</th></tr></thead>
+      <tbody><tr><td>All five groups (Z / O / N / F / S)</td><td>70.0% <span class='sd'>± 3.9</span></td><td>64.7%</td><td>0.94</td></tr>
+<tr><td>Any non-seizure vs seizure (Z+O+N+F vs S)</td><td>96.0% <span class='sd'>± 3.3</span></td><td>95.3%</td><td>0.99</td></tr>
+<tr><td>Healthy vs seizure (Z+O vs S)</td><td>97.0% <span class='sd'>± 3.3</span></td><td>100.0%</td><td>1.00</td></tr>
+<tr><td>Patients between seizures vs seizure (N+F vs S)</td><td>93.0% <span class='sd'>± 4.0</span></td><td>91.1%</td><td>0.99</td></tr>
+<tr><td>Healthy vs between seizures vs seizure (Z+O vs N+F vs S)</td><td>94.0% <span class='sd'>± 3.4</span></td><td>91.3%</td><td>0.99</td></tr>
+<tr><td>Hardest pair: the two between-seizure groups (N vs F)</td><td>65.5% <span class='sd'>± 10.7</span></td><td>65.0%</td><td>0.76</td></tr></tbody>
+    </table>
+  </div>
+  <p class="small muted" style="margin-top:8px">AUC is the 10-part average; for questions with more than two groups it is
+  the average of each group scored against all the others. Across all 32 questions: two-group 65.5–97.0%,
+  three-group 68.3–94.0%, four-group 68.0–80.8%.</p>
+
+  <div class="card chart">
+    <h3>Accuracy for every question</h3>
+    <div class="small muted">Hover or tap a row for details. Z / O healthy · N / F between seizures · S seizure</div>
+    <div class="legend" aria-hidden="true">
+      <span><i class="k-bar"></i>10-part average</span>
+      <span><i class="k-wh"></i>spread (±)</span>
+      <span><i class="k-dot"></i>70/30 test</span>
+    </div>
+    <div class="grp">Five groups <span>(1 question)</span></div>
+<div class="row" data-tip="Z vs O vs N vs F vs S: 10-part average 70.0% (spread ±3.9), 70/30 test 64.7%, AUC 0.94" tabindex="0"><div class="lab">Z vs O vs N vs F vs S</div><div class="track"><div class="bar s1" style="width:70.00%"></div><div class="wh" style="left:66.11%;width:7.77%"></div><div class="dot s2" style="left:64.67%"></div></div><div class="val">70.0%</div></div>
+<div class="grp">Four groups <span>(5 questions)</span></div>
+<div class="row" data-tip="O vs N vs F vs S: 10-part average 80.8% (spread ±7.1), 70/30 test 71.7%, AUC 0.95" tabindex="0"><div class="lab">O vs N vs F vs S</div><div class="track"><div class="bar s1" style="width:80.75%"></div><div class="wh" style="left:73.67%;width:14.15%"></div><div class="dot s2" style="left:71.67%"></div></div><div class="val">80.8%</div></div>
+<div class="row" data-tip="Z vs O vs N vs F: 10-part average 78.8% (spread ±8.7), 70/30 test 73.3%, AUC 0.96" tabindex="0"><div class="lab">Z vs O vs N vs F</div><div class="track"><div class="bar s1" style="width:78.75%"></div><div class="wh" style="left:70.07%;width:17.36%"></div><div class="dot s2" style="left:73.33%"></div></div><div class="val">78.8%</div></div>
+<div class="row" data-tip="Z vs O vs F vs S: 10-part average 78.8% (spread ±6.7), 70/30 test 71.7%, AUC 0.96" tabindex="0"><div class="lab">Z vs O vs F vs S</div><div class="track"><div class="bar s1" style="width:78.75%"></div><div class="wh" style="left:72.06%;width:13.39%"></div><div class="dot s2" style="left:71.67%"></div></div><div class="val">78.8%</div></div>
+<div class="row" data-tip="Z vs O vs N vs S: 10-part average 78.5% (spread ±7.4), 70/30 test 85.0%, AUC 0.96" tabindex="0"><div class="lab">Z vs O vs N vs S</div><div class="track"><div class="bar s1" style="width:78.50%"></div><div class="wh" style="left:71.12%;width:14.76%"></div><div class="dot s2" style="left:85.00%"></div></div><div class="val">78.5%</div></div>
+<div class="row" data-tip="Z vs N vs F vs S: 10-part average 68.0% (spread ±10.0), 70/30 test 68.3%, AUC 0.90" tabindex="0"><div class="lab">Z vs N vs F vs S</div><div class="track"><div class="bar s1" style="width:68.00%"></div><div class="wh" style="left:58.01%;width:19.97%"></div><div class="dot s2" style="left:68.33%"></div></div><div class="val">68.0%</div></div>
+<div class="grp">Three groups <span>(11 questions)</span></div>
+<div class="row" data-tip="Z+O vs N+F vs S: 10-part average 94.0% (spread ±3.4), 70/30 test 91.3%, AUC 0.99" tabindex="0"><div class="lab">Z+O vs N+F vs S</div><div class="track"><div class="bar s1" style="width:94.00%"></div><div class="wh" style="left:90.60%;width:6.80%"></div><div class="dot s2" style="left:91.33%"></div></div><div class="val">94.0%</div></div>
+<div class="row" data-tip="O vs N vs S: 10-part average 90.7% (spread ±4.9), 70/30 test 87.8%, AUC 0.99" tabindex="0"><div class="lab">O vs N vs S</div><div class="track"><div class="bar s1" style="width:90.67%"></div><div class="wh" style="left:85.75%;width:9.84%"></div><div class="dot s2" style="left:87.78%"></div></div><div class="val">90.7%</div></div>
+<div class="row" data-tip="O vs F vs S: 10-part average 87.0% (spread ±9.6), 70/30 test 80.0%, AUC 0.98" tabindex="0"><div class="lab">O vs F vs S</div><div class="track"><div class="bar s1" style="width:87.00%"></div><div class="wh" style="left:77.38%;width:19.23%"></div><div class="dot s2" style="left:80.00%"></div></div><div class="val">87.0%</div></div>
+<div class="row" data-tip="Z vs O vs F: 10-part average 86.7% (spread ±8.0), 70/30 test 74.4%, AUC 0.97" tabindex="0"><div class="lab">Z vs O vs F</div><div class="track"><div class="bar s1" style="width:86.67%"></div><div class="wh" style="left:78.65%;width:16.02%"></div><div class="dot s2" style="left:74.44%"></div></div><div class="val">86.7%</div></div>
+<div class="row" data-tip="Z vs O vs N: 10-part average 86.0% (spread ±6.0), 70/30 test 87.8%, AUC 0.97" tabindex="0"><div class="lab">Z vs O vs N</div><div class="track"><div class="bar s1" style="width:86.00%"></div><div class="wh" style="left:79.95%;width:12.09%"></div><div class="dot s2" style="left:87.78%"></div></div><div class="val">86.0%</div></div>
+<div class="row" data-tip="O vs F vs N: 10-part average 81.0% (spread ±7.0), 70/30 test 74.4%, AUC 0.93" tabindex="0"><div class="lab">O vs F vs N</div><div class="track"><div class="bar s1" style="width:81.00%"></div><div class="wh" style="left:73.96%;width:14.07%"></div><div class="dot s2" style="left:74.44%"></div></div><div class="val">81.0%</div></div>
+<div class="row" data-tip="Z vs N vs S: 10-part average 78.3% (spread ±12.2), 70/30 test 73.3%, AUC 0.93" tabindex="0"><div class="lab">Z vs N vs S</div><div class="track"><div class="bar s1" style="width:78.33%"></div><div class="wh" style="left:66.14%;width:24.39%"></div><div class="dot s2" style="left:73.33%"></div></div><div class="val">78.3%</div></div>
+<div class="row" data-tip="Z vs N vs F: 10-part average 78.0% (spread ±8.6), 70/30 test 72.2%, AUC 0.92" tabindex="0"><div class="lab">Z vs N vs F</div><div class="track"><div class="bar s1" style="width:78.00%"></div><div class="wh" style="left:69.36%;width:17.27%"></div><div class="dot s2" style="left:72.22%"></div></div><div class="val">78.0%</div></div>
+<div class="row" data-tip="Z vs F vs S: 10-part average 77.7% (spread ±8.8), 70/30 test 71.1%, AUC 0.92" tabindex="0"><div class="lab">Z vs F vs S</div><div class="track"><div class="bar s1" style="width:77.67%"></div><div class="wh" style="left:68.91%;width:17.51%"></div><div class="dot s2" style="left:71.11%"></div></div><div class="val">77.7%</div></div>
+<div class="row" data-tip="Z vs O vs S: 10-part average 75.7% (spread ±7.5), 70/30 test 86.7%, AUC 0.94" tabindex="0"><div class="lab">Z vs O vs S</div><div class="track"><div class="bar s1" style="width:75.67%"></div><div class="wh" style="left:68.12%;width:15.09%"></div><div class="dot s2" style="left:86.67%"></div></div><div class="val">75.7%</div></div>
+<div class="row" data-tip="N vs F vs S: 10-part average 68.3% (spread ±9.1), 70/30 test 67.8%, AUC 0.87" tabindex="0"><div class="lab">N vs F vs S</div><div class="track"><div class="bar s1" style="width:68.33%"></div><div class="wh" style="left:59.27%;width:18.12%"></div><div class="dot s2" style="left:67.78%"></div></div><div class="val">68.3%</div></div>
+<div class="grp">Two groups <span>(15 questions)</span></div>
+<div class="row" data-tip="O vs N: 10-part average 97.0% (spread ±4.2), 70/30 test 91.7%, AUC 1.00" tabindex="0"><div class="lab">O vs N</div><div class="track"><div class="bar s1" style="width:97.00%"></div><div class="wh" style="left:92.78%;width:7.22%"></div><div class="dot s2" style="left:91.67%"></div></div><div class="val">97.0%</div></div>
+<div class="row" data-tip="O vs F: 10-part average 97.0% (spread ±2.6), 70/30 test 88.3%, AUC 1.00" tabindex="0"><div class="lab">O vs F</div><div class="track"><div class="bar s1" style="width:97.00%"></div><div class="wh" style="left:94.42%;width:5.16%"></div><div class="dot s2" style="left:88.33%"></div></div><div class="val">97.0%</div></div>
+<div class="row" data-tip="Z+O vs S: 10-part average 97.0% (spread ±3.3), 70/30 test 100.0%, AUC 1.00" tabindex="0"><div class="lab">Z+O vs S</div><div class="track"><div class="bar s1" style="width:97.00%"></div><div class="wh" style="left:93.69%;width:6.31%"></div><div class="dot s2" style="left:100.00%"></div></div><div class="val">97.0%</div></div>
+<div class="row" data-tip="Z+O+N+F vs S: 10-part average 96.0% (spread ±3.3), 70/30 test 95.3%, AUC 0.99" tabindex="0"><div class="lab">Z+O+N+F vs S</div><div class="track"><div class="bar s1" style="width:96.00%"></div><div class="wh" style="left:92.73%;width:6.53%"></div><div class="dot s2" style="left:95.33%"></div></div><div class="val">96.0%</div></div>
+<div class="row" data-tip="Z+O vs N+F: 10-part average 95.5% (spread ±6.0), 70/30 test 87.5%, AUC 0.99" tabindex="0"><div class="lab">Z+O vs N+F</div><div class="track"><div class="bar s1" style="width:95.50%"></div><div class="wh" style="left:89.51%;width:10.49%"></div><div class="dot s2" style="left:87.50%"></div></div><div class="val">95.5%</div></div>
+<div class="row" data-tip="Z vs N: 10-part average 95.0% (spread ±5.3), 70/30 test 90.0%, AUC 0.99" tabindex="0"><div class="lab">Z vs N</div><div class="track"><div class="bar s1" style="width:95.00%"></div><div class="wh" style="left:89.73%;width:10.27%"></div><div class="dot s2" style="left:90.00%"></div></div><div class="val">95.0%</div></div>
+<div class="row" data-tip="Z+O vs N+F+S: 10-part average 94.4% (spread ±3.7), 70/30 test 92.0%, AUC 0.99" tabindex="0"><div class="lab">Z+O vs N+F+S</div><div class="track"><div class="bar s1" style="width:94.40%"></div><div class="wh" style="left:90.65%;width:7.50%"></div><div class="dot s2" style="left:92.00%"></div></div><div class="val">94.4%</div></div>
+<div class="row" data-tip="N+F vs S: 10-part average 93.0% (spread ±4.0), 70/30 test 91.1%, AUC 0.99" tabindex="0"><div class="lab">N+F vs S</div><div class="track"><div class="bar s1" style="width:93.00%"></div><div class="wh" style="left:89.01%;width:7.98%"></div><div class="dot s2" style="left:91.11%"></div></div><div class="val">93.0%</div></div>
+<div class="row" data-tip="O vs S: 10-part average 93.0% (spread ±5.4), 70/30 test 96.7%, AUC 1.00" tabindex="0"><div class="lab">O vs S</div><div class="track"><div class="bar s1" style="width:93.00%"></div><div class="wh" style="left:87.63%;width:10.75%"></div><div class="dot s2" style="left:96.67%"></div></div><div class="val">93.0%</div></div>
+<div class="row" data-tip="Z vs F: 10-part average 92.0% (spread ±7.1), 70/30 test 93.3%, AUC 0.99" tabindex="0"><div class="lab">Z vs F</div><div class="track"><div class="bar s1" style="width:92.00%"></div><div class="wh" style="left:84.85%;width:14.30%"></div><div class="dot s2" style="left:93.33%"></div></div><div class="val">92.0%</div></div>
+<div class="row" data-tip="N vs S: 10-part average 91.0% (spread ±8.1), 70/30 test 98.3%, AUC 1.00" tabindex="0"><div class="lab">N vs S</div><div class="track"><div class="bar s1" style="width:91.00%"></div><div class="wh" style="left:82.90%;width:16.19%"></div><div class="dot s2" style="left:98.33%"></div></div><div class="val">91.0%</div></div>
+<div class="row" data-tip="Z vs S: 10-part average 89.5% (spread ±9.8), 70/30 test 96.7%, AUC 1.00" tabindex="0"><div class="lab">Z vs S</div><div class="track"><div class="bar s1" style="width:89.50%"></div><div class="wh" style="left:79.65%;width:19.69%"></div><div class="dot s2" style="left:96.67%"></div></div><div class="val">89.5%</div></div>
+<div class="row" data-tip="F vs S: 10-part average 86.0% (spread ±8.1), 70/30 test 91.7%, AUC 0.99" tabindex="0"><div class="lab">F vs S</div><div class="track"><div class="bar s1" style="width:86.00%"></div><div class="wh" style="left:77.90%;width:16.19%"></div><div class="dot s2" style="left:91.67%"></div></div><div class="val">86.0%</div></div>
+<div class="row" data-tip="Z vs O: 10-part average 81.0% (spread ±8.4), 70/30 test 81.7%, AUC 0.93" tabindex="0"><div class="lab">Z vs O</div><div class="track"><div class="bar s1" style="width:81.00%"></div><div class="wh" style="left:72.57%;width:16.87%"></div><div class="dot s2" style="left:81.67%"></div></div><div class="val">81.0%</div></div>
+<div class="row" data-tip="N vs F: 10-part average 65.5% (spread ±10.7), 70/30 test 65.0%, AUC 0.76" tabindex="0"><div class="lab">N vs F</div><div class="track"><div class="bar s1" style="width:65.50%"></div><div class="wh" style="left:54.84%;width:21.32%"></div><div class="dot s2" style="left:65.00%"></div></div><div class="val">65.5%</div></div>
+    <div class="axis" aria-hidden="true"><div></div>
+      <div class="ticks"><span style="left:0">0%</span><span style="left:25%">25%</span><span style="left:50%">50%</span><span style="left:75%">75%</span><span style="left:100%">100%</span></div><div></div></div>
+    <details>
+      <summary>Show all 32 results as a table</summary>
+      <div class="scroll"><table class="tbl">
+        <thead><tr><th>Question</th><th>Groups</th><th>10-part test</th><th>70/30 test</th><th>AUC</th></tr></thead>
+        <tbody><tr><td>Z vs O vs N vs F vs S</td><td>5</td><td>70.0% ± 3.9</td><td>64.7%</td><td>0.94</td></tr>
+<tr><td>O vs N vs F vs S</td><td>4</td><td>80.8% ± 7.1</td><td>71.7%</td><td>0.95</td></tr>
+<tr><td>Z vs O vs N vs F</td><td>4</td><td>78.8% ± 8.7</td><td>73.3%</td><td>0.96</td></tr>
+<tr><td>Z vs O vs F vs S</td><td>4</td><td>78.8% ± 6.7</td><td>71.7%</td><td>0.96</td></tr>
+<tr><td>Z vs O vs N vs S</td><td>4</td><td>78.5% ± 7.4</td><td>85.0%</td><td>0.96</td></tr>
+<tr><td>Z vs N vs F vs S</td><td>4</td><td>68.0% ± 10.0</td><td>68.3%</td><td>0.90</td></tr>
+<tr><td>Z+O vs N+F vs S</td><td>3</td><td>94.0% ± 3.4</td><td>91.3%</td><td>0.99</td></tr>
+<tr><td>O vs N vs S</td><td>3</td><td>90.7% ± 4.9</td><td>87.8%</td><td>0.99</td></tr>
+<tr><td>O vs F vs S</td><td>3</td><td>87.0% ± 9.6</td><td>80.0%</td><td>0.98</td></tr>
+<tr><td>Z vs O vs F</td><td>3</td><td>86.7% ± 8.0</td><td>74.4%</td><td>0.97</td></tr>
+<tr><td>Z vs O vs N</td><td>3</td><td>86.0% ± 6.0</td><td>87.8%</td><td>0.97</td></tr>
+<tr><td>O vs F vs N</td><td>3</td><td>81.0% ± 7.0</td><td>74.4%</td><td>0.93</td></tr>
+<tr><td>Z vs N vs S</td><td>3</td><td>78.3% ± 12.2</td><td>73.3%</td><td>0.93</td></tr>
+<tr><td>Z vs N vs F</td><td>3</td><td>78.0% ± 8.6</td><td>72.2%</td><td>0.92</td></tr>
+<tr><td>Z vs F vs S</td><td>3</td><td>77.7% ± 8.8</td><td>71.1%</td><td>0.92</td></tr>
+<tr><td>Z vs O vs S</td><td>3</td><td>75.7% ± 7.5</td><td>86.7%</td><td>0.94</td></tr>
+<tr><td>N vs F vs S</td><td>3</td><td>68.3% ± 9.1</td><td>67.8%</td><td>0.87</td></tr>
+<tr><td>O vs N</td><td>2</td><td>97.0% ± 4.2</td><td>91.7%</td><td>1.00</td></tr>
+<tr><td>O vs F</td><td>2</td><td>97.0% ± 2.6</td><td>88.3%</td><td>1.00</td></tr>
+<tr><td>Z+O vs S</td><td>2</td><td>97.0% ± 3.3</td><td>100.0%</td><td>1.00</td></tr>
+<tr><td>Z+O+N+F vs S</td><td>2</td><td>96.0% ± 3.3</td><td>95.3%</td><td>0.99</td></tr>
+<tr><td>Z+O vs N+F</td><td>2</td><td>95.5% ± 6.0</td><td>87.5%</td><td>0.99</td></tr>
+<tr><td>Z vs N</td><td>2</td><td>95.0% ± 5.3</td><td>90.0%</td><td>0.99</td></tr>
+<tr><td>Z+O vs N+F+S</td><td>2</td><td>94.4% ± 3.7</td><td>92.0%</td><td>0.99</td></tr>
+<tr><td>O vs S</td><td>2</td><td>93.0% ± 5.4</td><td>96.7%</td><td>1.00</td></tr>
+<tr><td>N+F vs S</td><td>2</td><td>93.0% ± 4.0</td><td>91.1%</td><td>0.99</td></tr>
+<tr><td>Z vs F</td><td>2</td><td>92.0% ± 7.1</td><td>93.3%</td><td>0.99</td></tr>
+<tr><td>N vs S</td><td>2</td><td>91.0% ± 8.1</td><td>98.3%</td><td>1.00</td></tr>
+<tr><td>Z vs S</td><td>2</td><td>89.5% ± 9.8</td><td>96.7%</td><td>1.00</td></tr>
+<tr><td>F vs S</td><td>2</td><td>86.0% ± 8.1</td><td>91.7%</td><td>0.99</td></tr>
+<tr><td>Z vs O</td><td>2</td><td>81.0% ± 8.4</td><td>81.7%</td><td>0.93</td></tr>
+<tr><td>N vs F</td><td>2</td><td>65.5% ± 10.7</td><td>65.0%</td><td>0.76</td></tr></tbody>
+      </table></div>
+    </details>
+  </div>
+</section>
+
+<section>
+  <h2>Results: CHB-MIT <span class="muted" style="font-weight:400">(each patient tested unseen)</span></h2>
+  <div class="card scroll">
+    <table class="tbl">
+      <thead><tr><th>Measure</th><th>Average over patients</th><th>All test segments together</th></tr></thead>
+      <tbody>
+<tr><td>Accuracy</td><td>75.4% <span class='sd'>± 17.5</span></td><td>72.9%</td></tr>
+<tr><td>Seizures caught</td><td>54.1% <span class='sd'>± 37.7</span>*</td><td>49.9%</td></tr>
+<tr><td>Correct “no seizure”</td><td>94.6% <span class='sd'>± 9.8</span></td><td>95.3%</td></tr>
+<tr><td>AUC</td><td>0.86 <span class='sd'>± 0.20</span>*</td><td>0.77</td></tr></tbody>
+    </table>
+  </div>
+  <p class="small muted" style="margin-top:8px">* Average over 22 patients: chb07 has no seizure segments in the
+  prepared data, so these cannot be measured for it. Its false-alarm rate was 3.2%.</p>
+
+  <div class="card chart">
+    <h3>Seizures caught for each patient</h3>
+    <div class="small muted">Sorted from most to fewest seizures caught. Hover or tap a row for details.</div>
+    <div class="legend" aria-hidden="true">
+      <span><i class="k-bar"></i>seizures caught</span>
+      <span><i class="k-dot"></i>correct “no seizure”</span>
+    </div>
+    <div class="row" data-tip="chb02: caught 100.0% of 16 seizure segments; 100.0% of non-seizure segments correctly left alone; accuracy 100.0%; AUC 1.00" tabindex="0"><div class="lab">chb02</div><div class="track"><div class="bar s1" style="width:100.00%"></div><div class="dot s2" style="left:100.00%"></div></div><div class="val">100%</div></div>
+<div class="row" data-tip="chb10: caught 100.0% of 41 seizure segments; 97.6% of non-seizure segments correctly left alone; accuracy 98.8%; AUC 1.00" tabindex="0"><div class="lab">chb10</div><div class="track"><div class="bar s1" style="width:100.00%"></div><div class="dot s2" style="left:97.56%"></div></div><div class="val">100%</div></div>
+<div class="row" data-tip="chb22: caught 100.0% of 19 seizure segments; 89.5% of non-seizure segments correctly left alone; accuracy 94.7%; AUC 1.00" tabindex="0"><div class="lab">chb22</div><div class="track"><div class="bar s1" style="width:100.00%"></div><div class="dot s2" style="left:89.47%"></div></div><div class="val">100%</div></div>
+<div class="row" data-tip="chb09: caught 100.0% of 27 seizure segments; 66.7% of non-seizure segments correctly left alone; accuracy 85.4%; AUC 0.99" tabindex="0"><div class="lab">chb09</div><div class="track"><div class="bar s1" style="width:100.00%"></div><div class="dot s2" style="left:66.67%"></div></div><div class="val">100%</div></div>
+<div class="row" data-tip="chb05: caught 100.0% of 54 seizure segments; 68.5% of non-seizure segments correctly left alone; accuracy 84.3%; AUC 0.99" tabindex="0"><div class="lab">chb05</div><div class="track"><div class="bar s1" style="width:100.00%"></div><div class="dot s2" style="left:68.52%"></div></div><div class="val">100%</div></div>
+<div class="row" data-tip="chb11: caught 97.5% of 80 seizure segments; 83.8% of non-seizure segments correctly left alone; accuracy 90.6%; AUC 0.98" tabindex="0"><div class="lab">chb11</div><div class="track"><div class="bar s1" style="width:97.50%"></div><div class="dot s2" style="left:83.75%"></div></div><div class="val">98%</div></div>
+<div class="row" data-tip="chb08: caught 80.2% of 91 seizure segments; 94.5% of non-seizure segments correctly left alone; accuracy 87.4%; AUC 0.92" tabindex="0"><div class="lab">chb08</div><div class="track"><div class="bar s1" style="width:80.22%"></div><div class="dot s2" style="left:94.51%"></div></div><div class="val">80%</div></div>
+<div class="row" data-tip="chb17: caught 78.6% of 28 seizure segments; 100.0% of non-seizure segments correctly left alone; accuracy 89.3%; AUC 0.98" tabindex="0"><div class="lab">chb17</div><div class="track"><div class="bar s1" style="width:78.57%"></div><div class="dot s2" style="left:100.00%"></div></div><div class="val">79%</div></div>
+<div class="row" data-tip="chb03: caught 75.7% of 37 seizure segments; 100.0% of non-seizure segments correctly left alone; accuracy 87.8%; AUC 0.99" tabindex="0"><div class="lab">chb03</div><div class="track"><div class="bar s1" style="width:75.68%"></div><div class="dot s2" style="left:100.00%"></div></div><div class="val">76%</div></div>
+<div class="row" data-tip="chb24: caught 73.3% of 45 seizure segments; 100.0% of non-seizure segments correctly left alone; accuracy 86.7%; AUC 0.92" tabindex="0"><div class="lab">chb24</div><div class="track"><div class="bar s1" style="width:73.33%"></div><div class="dot s2" style="left:100.00%"></div></div><div class="val">73%</div></div>
+<div class="row" data-tip="chb23: caught 53.7% of 41 seizure segments; 100.0% of non-seizure segments correctly left alone; accuracy 76.8%; AUC 0.97" tabindex="0"><div class="lab">chb23</div><div class="track"><div class="bar s1" style="width:53.66%"></div><div class="dot s2" style="left:100.00%"></div></div><div class="val">54%</div></div>
+<div class="row" data-tip="chb01: caught 50.0% of 62 seizure segments; 100.0% of non-seizure segments correctly left alone; accuracy 75.0%; AUC 0.82" tabindex="0"><div class="lab">chb01</div><div class="track"><div class="bar s1" style="width:50.00%"></div><div class="dot s2" style="left:100.00%"></div></div><div class="val">50%</div></div>
+<div class="row" data-tip="chb18: caught 44.8% of 29 seizure segments; 100.0% of non-seizure segments correctly left alone; accuracy 72.4%; AUC 0.96" tabindex="0"><div class="lab">chb18</div><div class="track"><div class="bar s1" style="width:44.83%"></div><div class="dot s2" style="left:100.00%"></div></div><div class="val">45%</div></div>
+<div class="row" data-tip="chb19: caught 36.4% of 22 seizure segments; 100.0% of non-seizure segments correctly left alone; accuracy 68.2%; AUC 0.83" tabindex="0"><div class="lab">chb19</div><div class="track"><div class="bar s1" style="width:36.36%"></div><div class="dot s2" style="left:100.00%"></div></div><div class="val">36%</div></div>
+<div class="row" data-tip="chb04: caught 33.3% of 36 seizure segments; 100.0% of non-seizure segments correctly left alone; accuracy 66.7%; AUC 0.84" tabindex="0"><div class="lab">chb04</div><div class="track"><div class="bar s1" style="width:33.33%"></div><div class="dot s2" style="left:100.00%"></div></div><div class="val">33%</div></div>
+<div class="row" data-tip="chb06: caught 23.1% of 13 seizure segments; 92.3% of non-seizure segments correctly left alone; accuracy 57.7%; AUC 0.79" tabindex="0"><div class="lab">chb06</div><div class="track"><div class="bar s1" style="width:23.08%"></div><div class="dot s2" style="left:92.31%"></div></div><div class="val">23%</div></div>
+<div class="row" data-tip="chb13: caught 19.5% of 41 seizure segments; 100.0% of non-seizure segments correctly left alone; accuracy 59.8%; AUC 0.84" tabindex="0"><div class="lab">chb13</div><div class="track"><div class="bar s1" style="width:19.51%"></div><div class="dot s2" style="left:100.00%"></div></div><div class="val">20%</div></div>
+<div class="row" data-tip="chb20: caught 12.0% of 25 seizure segments; 100.0% of non-seizure segments correctly left alone; accuracy 56.0%; AUC 0.71" tabindex="0"><div class="lab">chb20</div><div class="track"><div class="bar s1" style="width:12.00%"></div><div class="dot s2" style="left:100.00%"></div></div><div class="val">12%</div></div>
+<div class="row" data-tip="chb12: caught 8.5% of 94 seizure segments; 100.0% of non-seizure segments correctly left alone; accuracy 54.3%; AUC 0.59" tabindex="0"><div class="lab">chb12</div><div class="track"><div class="bar s1" style="width:8.51%"></div><div class="dot s2" style="left:100.00%"></div></div><div class="val">9%</div></div>
+<div class="row" data-tip="chb15: caught 3.6% of 194 seizure segments; 100.0% of non-seizure segments correctly left alone; accuracy 51.8%; AUC 0.74" tabindex="0"><div class="lab">chb15</div><div class="track"><div class="bar s1" style="width:3.61%"></div><div class="dot s2" style="left:100.00%"></div></div><div class="val">4%</div></div>
+<div class="row" data-tip="chb16: caught 0.0% of 4 seizure segments; 100.0% of non-seizure segments correctly left alone; accuracy 50.0%; AUC 1.00" tabindex="0"><div class="lab">chb16</div><div class="track"><div class="bar s1" style="width:0.00%"></div><div class="dot s2" style="left:100.00%"></div></div><div class="val">0%</div></div>
+<div class="row" data-tip="chb14: caught 0.0% of 15 seizure segments; 86.7% of non-seizure segments correctly left alone; accuracy 43.3%; AUC 0.13" tabindex="0"><div class="lab">chb14</div><div class="track"><div class="bar s1" style="width:0.00%"></div><div class="dot s2" style="left:86.67%"></div></div><div class="val">0%</div></div>
+<div class="row" data-tip="chb07: no seizure segments in the data; 96.8% of its 31 segments correctly left alone" tabindex="0"><div class="lab">chb07</div><div class="track"><div class="na">no seizure segments</div><div class="dot s2" style="left:96.77%"></div></div><div class="val">—</div></div>
+    <div class="axis" aria-hidden="true"><div></div>
+      <div class="ticks"><span style="left:0">0%</span><span style="left:25%">25%</span><span style="left:50%">50%</span><span style="left:75%">75%</span><span style="left:100%">100%</span></div><div></div></div>
+    <details>
+      <summary>Show all 23 patients as a table</summary>
+      <div class="scroll"><table class="tbl">
+        <thead><tr><th>Patient</th><th>Segments</th><th>Accuracy</th><th>Seizures caught</th><th>Correct “no seizure”</th><th>AUC</th></tr></thead>
+        <tbody><tr><td>chb01</td><td>124</td><td>75.0%</td><td>50.0%</td><td>100.0%</td><td>0.82</td></tr>
+<tr><td>chb02</td><td>32</td><td>100.0%</td><td>100.0%</td><td>100.0%</td><td>1.00</td></tr>
+<tr><td>chb03</td><td>74</td><td>87.8%</td><td>75.7%</td><td>100.0%</td><td>0.99</td></tr>
+<tr><td>chb04</td><td>72</td><td>66.7%</td><td>33.3%</td><td>100.0%</td><td>0.84</td></tr>
+<tr><td>chb05</td><td>108</td><td>84.3%</td><td>100.0%</td><td>68.5%</td><td>0.99</td></tr>
+<tr><td>chb06</td><td>26</td><td>57.7%</td><td>23.1%</td><td>92.3%</td><td>0.79</td></tr>
+<tr><td>chb07</td><td>31</td><td>96.8%</td><td>—</td><td>96.8%</td><td>—</td></tr>
+<tr><td>chb08</td><td>182</td><td>87.4%</td><td>80.2%</td><td>94.5%</td><td>0.92</td></tr>
+<tr><td>chb09</td><td>48</td><td>85.4%</td><td>100.0%</td><td>66.7%</td><td>0.99</td></tr>
+<tr><td>chb10</td><td>82</td><td>98.8%</td><td>100.0%</td><td>97.6%</td><td>1.00</td></tr>
+<tr><td>chb11</td><td>160</td><td>90.6%</td><td>97.5%</td><td>83.8%</td><td>0.98</td></tr>
+<tr><td>chb12</td><td>188</td><td>54.3%</td><td>8.5%</td><td>100.0%</td><td>0.59</td></tr>
+<tr><td>chb13</td><td>82</td><td>59.8%</td><td>19.5%</td><td>100.0%</td><td>0.84</td></tr>
+<tr><td>chb14</td><td>30</td><td>43.3%</td><td>0.0%</td><td>86.7%</td><td>0.13</td></tr>
+<tr><td>chb15</td><td>388</td><td>51.8%</td><td>3.6%</td><td>100.0%</td><td>0.74</td></tr>
+<tr><td>chb16</td><td>8</td><td>50.0%</td><td>0.0%</td><td>100.0%</td><td>1.00</td></tr>
+<tr><td>chb17</td><td>56</td><td>89.3%</td><td>78.6%</td><td>100.0%</td><td>0.98</td></tr>
+<tr><td>chb18</td><td>58</td><td>72.4%</td><td>44.8%</td><td>100.0%</td><td>0.96</td></tr>
+<tr><td>chb19</td><td>44</td><td>68.2%</td><td>36.4%</td><td>100.0%</td><td>0.83</td></tr>
+<tr><td>chb20</td><td>50</td><td>56.0%</td><td>12.0%</td><td>100.0%</td><td>0.71</td></tr>
+<tr><td>chb22</td><td>38</td><td>94.7%</td><td>100.0%</td><td>89.5%</td><td>1.00</td></tr>
+<tr><td>chb23</td><td>82</td><td>76.8%</td><td>53.7%</td><td>100.0%</td><td>0.97</td></tr>
+<tr><td>chb24</td><td>90</td><td>86.7%</td><td>73.3%</td><td>100.0%</td><td>0.92</td></tr></tbody>
+      </table></div>
+    </details>
+  </div>
+</section>
+
+<section>
+  <h2>What stands out</h2>
+  <div class="points">
+    <div class="card point"><div class="num">1</div><div><h3>Seizure vs no seizure is the easy part on Bonn</h3>
+      <p>Separating the two between-seizure groups (N vs F) is hard, because those recordings look alike.</p></div></div>
+    <div class="card point"><div class="num">2</div><div><h3>Unseen patients are harder</h3>
+      <p>On CHB-MIT, where every test patient is new, the model is cautious: few false alarms, many missed seizures.</p></div></div>
+    <div class="card point"><div class="num">3</div><div><h3>The cut-off is often part of the problem</h3>
+      <p>For several patients the model scores seizures higher than non-seizures (high AUC) but still misses them at the
+      fixed 0.5 cut-off. chb16 is the clearest example: perfect ranking, yet no seizure caught, though it has only
+      8 segments. Scores also don't line up between patients (AUC 0.86 per patient but 0.77 when all
+      segments are pooled), so one cut-off doesn't suit everyone.</p></div></div>
+    <div class="card point"><div class="num">4</div><div><h3>The kept model is often an early one</h3>
+      <p>Training keeps whichever round scored best on the check set. On CHB-MIT, that best score came in the first
+      four rounds for 11 of 23 patients and was never beaten afterwards. The same rule applies to every model in
+      the comparison, so it may affect them too. We will agree how to handle it before the final comparison.</p></div></div>
+  </div>
+</section>
+
+<section>
+  <h2>Limits of these results</h2>
+  <div class="card">
+    <ul class="plain">
+      <li>Bonn has only 10 people (5 healthy, 5 with epilepsy), and its splits separate recordings, not people, so its
+        scores are likely optimistic. Its healthy groups were recorded on the scalp and its patient groups from inside
+        the skull, so part of the easy healthy-vs-seizure result may come from the recording method itself.</li>
+      <li>The CHB-MIT data was balanced to about half seizure segments. In real recordings seizures are rare, so these
+        numbers do not translate directly into real-world alarm rates.</li>
+      <li>Each split was trained once. Repeating with different random starting points would show how stable the results are.</li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <h2>Next steps</h2>
+  <ol class="steps">
+    <li class="card">Run the other models (EEGNet, TCFormer) on exactly the same splits. An automatic check confirms that the splits match.</li>
+    <li class="card">Agree on the two points above, the early-kept model and the fixed cut-off, for all models together.</li>
+    <li class="card">Compare the models side by side on both datasets.</li>
+  </ol>
+</section>
+
+<footer>
+  Compute used: one rented GPU (NVIDIA RTX 4000 Ada), about 4 hours in total, running many training jobs side by side.
+  Full per-question and per-patient files, charts and trained models are kept with the study outputs.
+</footer>
+
+</main>
+</body>
+</html>
