@@ -37,3 +37,6 @@ venv/
 pydeps/
 .ipynb_checkpoints/
 .pytest_cache/
+
+# Private notes for the collaborator
+questions_for_zainab.txt

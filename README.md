@@ -4,7 +4,8 @@ ATCNet (attention temporal convolutional network) adapted from motor-imagery EEG
 seizure classification, trained under a shared protocol so it can be compared fairly with
 EEGNet and TCFormer.
 
-> **Status:** in progress. Code and protocol are being finalized; no results are published yet.
+> **Status:** first complete ATCNet run on both datasets — see the plain-language
+> [results report](reports/REPORT.md). The side-by-side comparison with EEGNet and TCFormer is still to come.
 
 ## Scope
 
